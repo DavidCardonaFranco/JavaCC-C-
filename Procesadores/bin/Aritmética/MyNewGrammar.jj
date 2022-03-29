@@ -1,0 +1,145 @@
+/** Sección de opciones: Esta sección es opcional, el área de opciones permite especificar algunas directrices que ayuden a JavaCC a generar analizadores léxico-sintácticos más eficientes y adaptados a las necesidades concretas del desarrollador.  */
+/** Ignore_Case = true, para no hacer distinción entre mayúsculas y minúsculas.*/
+/** Static = false, para que los métodos que genere la compilación no sean estáticos.*/
+
+options {
+IGNORE_CASE = true;
+STATIC = false;
+}
+
+/** Sirven para indicarle a JavaCC el nombre de nuestra clase principal, así como para englobar tanto a esta como a cualquier otra que se quiera incluir de apoyo.*/
+PARSER_BEGIN(MyNewGrammar)
+/** Analizador de expresiones aritmeticas sencillas. */
+package Analizador; 
+public class Gramatica {
+   MyNewGrammar parser = new MyNewGrammar(System.in);
+    while (true)
+    {
+      System.out.print("Ingrese una ecuación del tipo:  \"1+(2+3)*4;\" :");
+      try
+      {
+        switch (MyNewGrammar.one_line())   /** llamado de la función sintáctica*/
+        {
+          case 0 : 
+          System.out.println("SOY PRO.");
+          break;
+          case 1 : 
+          System.out.println("CIAO PUES.");
+          break;
+          default : 
+          break;
+        }
+      }
+      catch (Exception e)
+      {
+        System.out.println("NO DIO :C.");
+        System.out.println(e.getMessage());
+        MyNewGrammar.ReInit(System.in);
+      }
+      catch (Error e)
+      {
+        System.out.println("AY NOO.");
+        System.out.println(e.getMessage());
+        break;
+      }
+    }
+  }
+}
+PARSER_END(MyNewGrammar)
+
+
+/** Léxico */
+SKIP : {
+  " "
+| "\t"
+| "\n"
+| "\r"
+| "\f"
+}
+
+TOKEN : {
+< INTEGER_LITERAL:
+     <DECIMAL_LITERAL> (["l","L"])?
+| < #DECIMAL_DIGIT: ["1"-"9"] (["0"-"9"])*>>
+| <STRING_LITERAL:["a"-"z"](["a"-"z"])* >
+
+/**| < STRING_LITERAL: "\"" (   (~["\"","\\","\n","\r"]) | ("\\" ( ["n","t","b","r","f","\\","'","\""] | ["0"-"7"] ( ["0"-"7"] )?| ["0"-"3"] ["0"-"7"] ["0"-"7"])))*
+
+*/
+}
+TOKEN : /* Operaciones */
+{
+ < ASSIGN: "=" >            /** EMPIEZAN AQUÍ*/
+| < MINUS: "-" >
+| < STAR: "*" >
+| < SLASH: "/" >
+| < COMMA :",">
+}
+
+
+/** Sintáctico */
+/** Instrucción -> evaluar [ Expresión ]; */
+
+int one_line() :
+{}
+{
+  primary_no_array_creation_expression() ";"
+  {
+    return 0;
+  }
+| ";"
+  {
+    return 1;
+  }
+}
+
+void AdditiveExpression():
+{}
+{
+  MultiplicativeExpression() ( ( "+" | "-" ) MultiplicativeExpression() )*
+}
+
+
+void MultiplicativeExpression():
+{}
+{
+  UnaryExpression() ( ( "*" | "/" | "%" ) UnaryExpression() )*
+}
+
+
+void UnaryExpression():
+{}
+{
+  primary_expression()
+|   
+   ( "+" | "-" ) UnaryExpression()
+|
+  PreIncrementExpression()
+|
+  PreDecrementExpression()
+|
+  UnaryExpressionNotPlusMinus()
+}
+
+void primary_expression():
+{}
+{
+  primary_no_array_creation_expression()
+}
+
+void primary_no_array_creation_expression():
+{}
+{
+  < INTEGER_LITERAL >
+|
+  parenthesized_expression()
+|
+  < STRING_LITERAL >
+}
+
+
+void parenthesized_expression():
+{}
+{
+  "(" expression() ")"   /** Debería ir primary_no_array_creation_expression()*/
+}
